@@ -1,0 +1,34 @@
+${dtype} dev ${disk}
+
+setenv bootargs enable_wait_mode=off
+setenv nextcon 0
+setenv bootargs $bootargs console=ttymxc0,115200 vmalloc=400M consoleblank=0 androidboot.hardware=freescale root=/dev/mmcblk2p2
+
+if hdmidet ; then
+        setenv bootargs $bootargs video=mxcfb${nextcon}:dev=hdmi,1920x1080M@60,if=RGB24
+        if test "0" -eq $nextcon; then
+                setenv fbmem "fbmem=28M";
+        else
+                setenv fbmem ${fbmem},28M
+        fi
+        setexpr nextcon $nextcon + 1
+else
+        setenv bootargs $bootargs video=mxcfb${nextcon}:dev=ldb,1024x600M@60,if=RGB666
+        if test "0" -eq $nextcon; then
+                setenv fbmem "fbmem=28M";
+        else
+                setenv fbmem ${fbmem},28M
+        fi
+        setexpr nextcon $nextcon + 1
+fi
+
+if itest.s "x6SOLO" == "x${cpu}" || itest.s "x6DL" == "x${cpu}"; then
+	setenv fdt_file imx6dl-ar6mx.dtb ;
+else
+	setenv fdt_file imx6q-ar6mx.dtb ;
+fi
+
+
+setenv bootargs $bootargs $fbmem
+load ${dtype} ${disk}:1 10800000 uImage && load ${dtype} ${disk}:1 18000000 ${fdt_file} && bootm 10800000 - 18000000
+echo "Error loading kernel image"
